@@ -6,7 +6,8 @@ This project is a C# Windows Forms application that visualizes the Mandelbrot se
 
 ## Description
 
-The Mandelbrot Set Visualizer generates a colorful representation of the Mandelbrot set, a famous fractal in mathematics. It utilizes GPU acceleration to perform the complex calculations required for rendering the set, resulting in faster performance compared to CPU-only implementations.
+The Mandelbrot Set Visualizer generates a colorful representation of the Mandelbrot set, a famous fractal in mathematics. 
+It utilizes GPU acceleration to perform the complex calculations required for rendering the set, resulting in faster performance compared to CPU-only implementations.
 
 ## Features
 
