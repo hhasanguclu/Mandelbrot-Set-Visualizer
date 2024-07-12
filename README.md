@@ -1,4 +1,6 @@
 # Mandelbrot Set Visualizer
+![alt text](https://i.imgur.com/SZVLkeU.png)
+
 
 This project is a C# Windows Forms application that visualizes the Mandelbrot set using CUDA-accelerated GPU computations via the ILGPU library.
 
