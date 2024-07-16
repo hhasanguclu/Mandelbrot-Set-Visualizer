@@ -4,7 +4,6 @@ using System.Windows.Forms;
 using ILGPU;
 using ILGPU.Runtime;
 using ILGPU.Runtime.Cuda;
-using System.Threading.Tasks;
 using System.Drawing.Imaging;
 using System.Diagnostics;
 
@@ -19,21 +18,16 @@ namespace MandelbrotSet
         private double MinIm = -1.2;
         private double MaxIm = 1.2;
         private double zoomFactor = 1.0;
-        private PointF panOffset = PointF.Empty;
-        private Point lastMousePosition = Point.Empty;
-        private bool isPanning = false;
         private Context context;
         private Accelerator accelerator;
         private Action<Index2D, ArrayView2D<uint, Stride2D.DenseX>, int, double, double, double, double> mandelbrotKernel;
         private MemoryBuffer2D<uint, Stride2D.DenseX> colorBuffer;
+        private const double ZoomFactor = 0.1;
 
         public Form1()
         {
             InitializeComponent();
-            this.MouseWheel += new MouseEventHandler(this.Form1_MouseWheel);
             this.pictureBox1.MouseDown += new MouseEventHandler(this.PictureBox1_MouseDown);
-            this.pictureBox1.MouseMove += new MouseEventHandler(this.PictureBox1_MouseMove);
-            this.pictureBox1.MouseUp += new MouseEventHandler(this.PictureBox1_MouseUp);
             this.ClientSize = new Size(1920, 1080);
             this.FormBorderStyle = FormBorderStyle.None;
             this.WindowState = FormWindowState.Maximized;
@@ -54,11 +48,17 @@ namespace MandelbrotSet
             GenerateMandelbrotSet();
         }
 
-        private void Form1_MouseWheel(object sender, MouseEventArgs e)
+        private void PictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            double zoomChange = 0.1 * (e.Delta > 0 ? 1 : -1);
-            PointF zoomCenter = pictureBox1.PointToClient(Cursor.Position);
-            ZoomMandelbrot(zoomChange, zoomCenter);
+            PointF zoomCenter = e.Location;
+            if (e.Button == MouseButtons.Left)
+            {
+                ZoomMandelbrot(ZoomFactor, zoomCenter);
+            }
+            else if (e.Button == MouseButtons.Right)
+            {
+                ZoomMandelbrot(-ZoomFactor, zoomCenter);
+            }
         }
 
         private void ZoomMandelbrot(double zoomChange, PointF zoomCenter)
@@ -70,59 +70,14 @@ namespace MandelbrotSet
             double widthRe = (MaxRe - MinRe) / newZoomFactor;
             double heightIm = (MaxIm - MinIm) / newZoomFactor;
 
-            MinRe = zoomCenterRe - widthRe * zoomCenter.X / pictureBox1.Width;
-            MaxRe = MinRe + widthRe;
-            MinIm = zoomCenterIm - heightIm * zoomCenter.Y / pictureBox1.Height;
-            MaxIm = MinIm + heightIm;
+            MinRe = zoomCenterRe - widthRe / 2;
+            MaxRe = zoomCenterRe + widthRe / 2;
+            MinIm = zoomCenterIm - heightIm / 2;
+            MaxIm = zoomCenterIm + heightIm / 2;
 
             zoomFactor = newZoomFactor;
 
             GenerateMandelbrotSet();
-        }
-
-        private void PictureBox1_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                isPanning = true;
-                lastMousePosition = e.Location;
-            }
-        }
-
-        private void PictureBox1_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (isPanning)
-            {
-                panOffset.X += e.X - lastMousePosition.X;
-                panOffset.Y += e.Y - lastMousePosition.Y;
-                lastMousePosition = e.Location;
-                UpdateMandelbrotBounds();
-                GenerateMandelbrotSet();
-            }
-        }
-
-        private void PictureBox1_MouseUp(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                isPanning = false;
-            }
-        }
-
-        private void UpdateMandelbrotBounds()
-        {
-            double centerX = (MinRe + MaxRe) / 2.0;
-            double centerY = (MinIm + MaxIm) / 2.0;
-
-            double width = (MaxRe - MinRe);
-            double height = (MaxIm - MinIm);
-
-            MinRe = centerX - width / 2.0 + panOffset.X / pictureBox1.Width * width;
-            MaxRe = centerX + width / 2.0 + panOffset.X / pictureBox1.Width * width;
-            MinIm = centerY - height / 2.0 + panOffset.Y / pictureBox1.Height * height;
-            MaxIm = centerY + height / 2.0 + panOffset.Y / pictureBox1.Height * height;
-
-            panOffset = PointF.Empty;
         }
 
         private void EnsureBufferSize()
@@ -135,7 +90,6 @@ namespace MandelbrotSet
             if (colorBuffer == null || colorBuffer.Extent.X != height || colorBuffer.Extent.Y != width)
             {
                 colorBuffer?.Dispose();
-                // ILGPU için Index2D'yi height, width sırasıyla oluşturuyoruz
                 colorBuffer = accelerator.Allocate2DDenseX<uint>(new Index2D(height, width));
                 mandelbrotBitmap?.Dispose();
                 mandelbrotBitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
@@ -154,58 +108,28 @@ namespace MandelbrotSet
             var width = pictureBox1.Width;
             var height = pictureBox1.Height;
 
-            Debug.WriteLine($"GenerateMandelbrotSet called with dimensions: {width}x{height}");
-
             EnsureBufferSize();
 
             try
             {
-                // ILGPU için Index2D'yi height, width sırasıyla oluşturuyoruz
                 mandelbrotKernel(new Index2D(height, width), colorBuffer.View, MaxIterations, MinRe, MaxRe, MinIm, MaxIm);
 
                 accelerator.Synchronize();
 
-                Debug.WriteLine("GPU kernel execution completed");
-
                 var colorData = colorBuffer.GetAsArray2D();
-
-                Debug.WriteLine($"colorData retrieved. Dimensions: {colorData.GetLength(0)}x{colorData.GetLength(1)}");
-                Debug.WriteLine($"mandelbrotBitmap dimensions: {mandelbrotBitmap.Width}x{mandelbrotBitmap.Height}");
-
-                // Boyutları kontrol ederken sırayı değiştiriyoruz
-                if (colorData.GetLength(0) != height || colorData.GetLength(1) != width)
-                {
-                    throw new InvalidOperationException($"Mismatch in dimensions. Expected: {width}x{height}, Got: {colorData.GetLength(1)}x{colorData.GetLength(0)}");
-                }
-
-                BitmapData bitmapData = mandelbrotBitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-
-                Debug.WriteLine("Bitmap locked for writing");
 
                 unsafe
                 {
-                    uint* pixelPtr = (uint*)bitmapData.Scan0;
-
-                    for (int y = 0; y < height; y++)
+                    fixed (uint* colorDataPtr = colorData)
                     {
-                        for (int x = 0; x < width; x++)
-                        {
-                            // colorData'nın boyutlarını ters çeviriyoruz
-                            pixelPtr[y * width + x] = colorData[y, x];
-                        }
+                        BitmapData bitmapData = mandelbrotBitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+                        Buffer.MemoryCopy(colorDataPtr, bitmapData.Scan0.ToPointer(), width * height * 4, width * height * 4);
+                        mandelbrotBitmap.UnlockBits(bitmapData);
                     }
                 }
 
-                Debug.WriteLine("Pixel data written to bitmap");
-
-                mandelbrotBitmap.UnlockBits(bitmapData);
-
-                Debug.WriteLine("Bitmap unlocked");
-
                 pictureBox1.Image = mandelbrotBitmap;
                 pictureBox1.Invalidate();
-
-                Debug.WriteLine("PictureBox updated");
             }
             catch (Exception ex)
             {
@@ -216,11 +140,8 @@ namespace MandelbrotSet
             }
         }
 
-
-
         private static void MandelbrotKernel(Index2D index, ArrayView2D<uint, Stride2D.DenseX> colorBuffer, int maxIterations, double minRe, double maxRe, double minIm, double maxIm)
         {
-            // index.X ve index.Y'yi ters çeviriyoruz
             double x0 = minRe + (maxRe - minRe) * index.Y / (colorBuffer.Extent.Y - 1);
             double y0 = minIm + (maxIm - minIm) * index.X / (colorBuffer.Extent.X - 1);
 
