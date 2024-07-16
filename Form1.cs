@@ -23,6 +23,7 @@ namespace MandelbrotSet
         private Action<Index2D, ArrayView2D<uint, Stride2D.DenseX>, int, double, double, double, double> mandelbrotKernel;
         private MemoryBuffer2D<uint, Stride2D.DenseX> colorBuffer;
         private const double ZoomFactor = 0.1;
+        private Button exitButton;
 
         public Form1()
         {
@@ -32,7 +33,26 @@ namespace MandelbrotSet
             this.FormBorderStyle = FormBorderStyle.None;
             this.WindowState = FormWindowState.Maximized;
 
+            InitializeExitButton();
             InitializeGPU();
+        }
+
+        private void InitializeExitButton()
+        {
+            exitButton = new Button
+            {
+                Text = "X",
+                Size = new Size(30, 30),
+                Location = new Point(this.ClientSize.Width - 40, 10),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.Red,
+                ForeColor = Color.White,
+                Font = new Font("Arial", 12, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            exitButton.Click += (sender, e) => this.Close();
+            this.Controls.Add(exitButton);
+            exitButton.BringToFront();
         }
 
         private void InitializeGPU()
