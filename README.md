@@ -1,55 +1,56 @@
 # Mandelbrot Set Visualizer
+
 ![alt text](https://i.imgur.com/SZVLkeU.png)
 
-
-This project is a C# Windows Forms application that visualizes the Mandelbrot set using CUDA-accelerated GPU computations via the ILGPU library.
-
-## Description
-
-The Mandelbrot Set Visualizer generates a colorful representation of the Mandelbrot set, a famous fractal in mathematics. 
-It utilizes GPU acceleration to perform the complex calculations required for rendering the set, resulting in faster performance compared to CPU-only implementations.
+This project is a high-performance Mandelbrot Set viewer implemented in C# using Windows Forms and ILGPU for GPU acceleration. It allows users to explore the fascinating world of the Mandelbrot Set with smooth zooming and panning capabilities.
 
 ## Features
 
-- GPU-accelerated Mandelbrot set generation using CUDA and ILGPU
-- Real-time rendering of the Mandelbrot set
-- Colorful visualization based on iteration count
+- Real-time rendering of the Mandelbrot Set
+- GPU acceleration using ILGPU and CUDA
+- Smooth zooming with left and right mouse clicks
+- Interactive panning
+- Full-screen display
+- Exit button for easy closure of the application
 
-## Prerequisites
-
-Before you begin, ensure you have met the following requirements:
+## Requirements
 
 - Windows operating system
-- .NET Framework 4.7.2 or later
-- Visual Studio 2019 or later
+- .NET Framework 4.7.2 or higher
 - CUDA-capable NVIDIA GPU
-- CUDA Toolkit 10.0 or later
+- CUDA Toolkit 10.0 or higher
 
 ## Installation
 
-To install the Mandelbrot Set Visualizer, follow these steps:
-
-1. Clone the repository:
+1. Clone this repository:
    ```
-   git clone https://github.com/your-username/mandelbrot-set-visualizer.git
+   git clone https://github.com/yourusername/mandelbrot-set-viewer.git
    ```
-2. Open the solution file (`MandelbrotSet.sln`) in Visual Studio.
+2. Open the solution in Visual Studio.
 3. Restore NuGet packages if necessary.
 4. Build the solution.
 
 ## Usage
 
-To use the Mandelbrot Set Visualizer:
+1. Run the application.
+2. Use the mouse to interact with the Mandelbrot Set:
+   - Left-click to zoom in at the clicked point
+   - Right-click to zoom out from the clicked point
+3. To exit the application, click the red "X" button in the top-right corner.
 
-1. Run the application from Visual Studio or by executing the built executable.
-2. The Mandelbrot set will be automatically generated and displayed in the window.
-3. Close the application when finished viewing.
+## Performance Tips
 
-## Contact
+For optimal performance, ensure that your NVIDIA drivers are up to date and that you have the latest version of the CUDA Toolkit installed.
 
-If you want to contact me, you can reach me at <hhasanguclu@gmail.com>.
+## Contributing
 
-## Acknowledgements
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-- [ILGPU](https://github.com/m4rs-mt/ILGPU) - The ILGPU library used for GPU acceleration
-- [Mandelbrot Set](https://en.wikipedia.org/wiki/Mandelbrot_set) - Wikipedia page on the Mandelbrot set
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+## Acknowledgments
+
+- Thanks to the ILGPU team for their excellent GPU computing library.
+- Inspired by the beauty and complexity of the Mandelbrot Set.
