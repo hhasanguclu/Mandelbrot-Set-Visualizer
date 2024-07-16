@@ -25,6 +25,9 @@ namespace MandelbrotSet
         private const double ZoomFactor = 0.1;
         private Button exitButton;
 
+        private const double ZoomInFactor = 0.8;
+        private const double ZoomOutFactor = 1.2;
+
         public Form1()
         {
             InitializeComponent();
@@ -73,29 +76,26 @@ namespace MandelbrotSet
             PointF zoomCenter = e.Location;
             if (e.Button == MouseButtons.Left)
             {
-                ZoomMandelbrot(ZoomFactor, zoomCenter);
+                ZoomMandelbrot(ZoomInFactor, zoomCenter);
             }
             else if (e.Button == MouseButtons.Right)
             {
-                ZoomMandelbrot(-ZoomFactor, zoomCenter);
+                ZoomMandelbrot(ZoomOutFactor, zoomCenter);
             }
         }
 
-        private void ZoomMandelbrot(double zoomChange, PointF zoomCenter)
+        private void ZoomMandelbrot(double zoomFactor, PointF zoomCenter)
         {
             double zoomCenterRe = MinRe + (MaxRe - MinRe) * zoomCenter.X / pictureBox1.Width;
             double zoomCenterIm = MinIm + (MaxIm - MinIm) * zoomCenter.Y / pictureBox1.Height;
 
-            double newZoomFactor = zoomFactor * (1.0 + zoomChange);
-            double widthRe = (MaxRe - MinRe) / newZoomFactor;
-            double heightIm = (MaxIm - MinIm) / newZoomFactor;
+            double newWidth = (MaxRe - MinRe) * zoomFactor;
+            double newHeight = (MaxIm - MinIm) * zoomFactor;
 
-            MinRe = zoomCenterRe - widthRe / 2;
-            MaxRe = zoomCenterRe + widthRe / 2;
-            MinIm = zoomCenterIm - heightIm / 2;
-            MaxIm = zoomCenterIm + heightIm / 2;
-
-            zoomFactor = newZoomFactor;
+            MinRe = zoomCenterRe - newWidth / 2;
+            MaxRe = zoomCenterRe + newWidth / 2;
+            MinIm = zoomCenterIm - newHeight / 2;
+            MaxIm = zoomCenterIm + newHeight / 2;
 
             GenerateMandelbrotSet();
         }
